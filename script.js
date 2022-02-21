@@ -11,20 +11,11 @@ let currentValue = display.textContent;
 let firstOperand = "";
 let secondOperand = "";
 let currentOperator = null;
+let floatChecker = 0;
 
-clearButton.addEventListener('click', () => {
-    resetScreen = 0;
-    currentValue = 0;
-    firstOperand = "";
-    secondOperand = "";
-    currentOperator = null;
-    display.textContent = 0;
-});
+clearButton.addEventListener('click', deleteAll);
 
-deleteButton.addEventListener('click', () =>{
-    currentValue = currentValue.slice(0, currentValue.length - 1);
-    display.textContent = display.textContent.slice(0, display.textContent.length - 1);
-});
+deleteButton.addEventListener('click', deleteOne);
 
 numberButtons.forEach((button) =>{
   button.addEventListener('click', () => appendNumber(button.textContent));
@@ -41,6 +32,13 @@ pointButton.addEventListener('click', addPoint);
 function addPoint(){
     display.textContent += ".";
     currentValue = display.textContent;
+    floatChecker = 1;
+}
+
+function errorControl(){
+    if(display.textContent.length>20){
+        display.textContent = "error";
+    }
 }
 
 function appendNumber(number){
@@ -53,6 +51,7 @@ function appendNumber(number){
     currentValue += number;
     display.textContent = currentValue;
     resetScreen = 0;
+    errorControl();
 }
 
 function setOperator(operator){
@@ -65,6 +64,24 @@ function setOperator(operator){
     resetScreen = 1;
 }
 
+function deleteAll(){
+    resetScreen = 0;
+    currentValue = 0;
+    firstOperand = "";
+    secondOperand = "";
+    currentOperator = null;
+    floatChecker = 0;
+    display.textContent = 0;
+}
+
+function deleteOne(){
+    currentValue = currentValue.slice(0, currentValue.length - 1);
+    display.textContent = display.textContent.slice(0, display.textContent.length - 1);
+    if(display.textContent === ''){
+        display.textContent = "0";
+    }
+}
+
 function evaluate(){
     if(currentOperator == null){
         return;
@@ -73,13 +90,25 @@ function evaluate(){
         alert("cannot divide 0");
     }
     secondOperand = display.textContent;
-    display.textContent = operate(currentOperator,firstOperand,secondOperand).toFixed(2);
+    if(floatChecker){
+        display.textContent = operate(currentOperator,firstOperand,secondOperand).toFixed(2);
+    }
+    else{
+        display.textContent = operate(currentOperator,firstOperand,secondOperand);
+    }
+    errorControl();
     currentOperator = null;
 }
 
 function operate(operator, a, b) {
-    a = parseFloat(a);
-    b = parseFloat(b);
+    if(floatChecker){
+        a = parseFloat(a);
+        b = parseFloat(b);
+    }
+    else{
+        a = parseInt(a);
+        b = parseInt(b);
+    }
     switch (operator) {
       case '+':
         return (a+b);
@@ -94,3 +123,14 @@ function operate(operator, a, b) {
         return null;
     }
 }
+
+document.addEventListener('keydown', function (event) {
+    event.preventDefault();
+    if (event.key > 0  || event.key < 9) appendNumber(event.key);
+    if (event.key == '+' || event.key == '/' || event.key == '*' || event.key == '-') setOperator(event.key);
+    if (event.key = event.return) appendNumber(event.key);
+    if (event.key === "Backspace") deleteOne();
+    if (event.key === "Delete") deleteAll();
+    if (event.key === ".") addPoint();
+    if (event.key === "=" || event.key === "Enter") evaluate();
+  });
